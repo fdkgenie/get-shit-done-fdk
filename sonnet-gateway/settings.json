@@ -1,0 +1,162 @@
+{
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "sk-38d6f11e805f1824-7qz2kh-b82a536f",
+    "ANTHROPIC_BASE_URL": "http://localhost:20128/v1",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "Haiku-Flash",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "Opus",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "Sonnet",
+    "ANTHROPIC_MODEL": "Sonnet"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(git:*)",
+      "Bash(claude mcp:*)",
+      "Bash(curl:*)",
+      "WebSearch",
+      "Bash($HOME/LMGC/rockable-git/rockable/BUILD/postpro:*)",
+      "Bash(tpost:*)",
+      "Bash(ls:*)",
+      "Bash(python3:*)",
+      "Bash(MPLBACKEND=Agg python3:*)",
+      "mcp__exa__web_search_exa",
+      "Bash(/Users/pham/LMGC/rockable-git/rockable/examples/test_harmonic/statistical_analysis/statistical_tests.py:*)",
+      "Bash(chmod +x:*)",
+      "Bash(/Users/pham/LMGC/rockable-git/rockable/examples/test_harmonic/publication_figures/generate_figures.py:*)",
+      "Bash(python:*)",
+      "Bash(wc:*)",
+      "Bash(mdls:*)",
+      "Bash(latexmk:*)"
+    ],
+    "defaultMode": "default"
+  },
+  "model": "opus",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.claude/hooks/complexity-classifier.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/pham/.ccpoke/hooks/claude-code-notification.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "chell notify --hook",
+            "timeout": 360
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/pham/.ccpoke/hooks/claude-code-permission-request.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "nmem-hook-pre-compact",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.claude/hooks/archive-generated-files.py\" pre",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/pham/.ccpoke/hooks/claude-code-pretooluse.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.claude/hooks/archive-generated-files.py\" post",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/pham/.ccpoke/hooks/claude-code-session-start.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "nmem-hook-stop",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/pham/.ccpoke/hooks/claude-code-stop.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline-newapi.sh"
+  },
+  "autoUpdatesChannel": "stable",
+  "minimumVersion": "2.1.68",
+  "skipDangerousModePermissionPrompt": true
+}

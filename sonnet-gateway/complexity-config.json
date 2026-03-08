@@ -1,0 +1,58 @@
+{
+  "_comment": "Sonnet-Gate v3 — Complexity Classifier Config. Chỉnh file này, không cần restart Claude Code hay edit .py.",
+
+  "word_thresholds": {
+    "trivial_max": 10,
+    "complex_min": 60,
+    "complex_boost": 100
+  },
+
+  "trivial_patterns": [
+    "\\b(fix typo|rename|format|lint|add comment|update comment)\\b",
+    "\\b(git (status|log|diff|add|commit|push|stash|pull|fetch))\\b",
+    "^(ls|cat|find|grep|echo|pwd|cd|which|type)\\b",
+    "\\b(what is|explain|describe|show me)\\b.{0,40}(variable|function|file|line|class)",
+    "\\b(simple|quick|small|tiny|minor)\\b.{0,20}(fix|change|edit|update)",
+    "\\b(add (a )?(line|comment|import|export|log|print))\\b",
+    "\\b(remove (a )?(line|comment|import|log|print))\\b",
+    "\\b(rename (file|variable|function|class|method))\\b"
+  ],
+
+  "standard_patterns": [
+    "\\b(implement|add|create|write).{0,30}(function|method|class|component|test|util)\\b",
+    "\\b(fix|debug|resolve).{0,30}(bug|error|issue|warning)\\b",
+    "\\b(update|modify|change).{0,30}(logic|behavior|config|setting)\\b",
+    "\\b(refactor)\\b.{0,30}(function|method|class|module)\\b"
+  ],
+
+  "complex_patterns": [
+    "\\b(architect|design|redesign|overhaul|restructure)\\b",
+    "\\b(implement|build|create).{0,30}(system|service|pipeline|api|platform|framework)\\b",
+    "\\b(refactor).{0,20}(entire|whole|all|codebase|module)\\b",
+    "\\b(migrate|migration|upgrade).{0,30}(database|framework|version|stack)\\b",
+    "\\b(multi.?file|codebase.?wide|across.{0,10}files?|multiple.{0,10}files?)\\b",
+    "\\b(performance|optimize|scale|security|authentication|authorization)\\b",
+    "\\b(investigate|diagnose|trace|profile)\\b",
+    "\\b(integrate|orchestrat|coordinat)\\b",
+    "\\b(plan|strategy|approach|solution)\\b.{0,10}(for|to)\\b",
+    "\\b(thiết kế|kiến trúc|triển khai|tích hợp|di chuyển|tái cấu trúc)\\b",
+    "\\b(hệ thống|nền tảng|dịch vụ|hiệu suất|bảo mật|xác thực)\\b"
+  ],
+
+  "watched_files": [
+    "context-snapshot.md",
+    "execution-plan.md",
+    "execution-report.md"
+  ],
+
+  "cost_estimate_tokens": {
+    "TRIVIAL":  0,
+    "STANDARD": 4000,
+    "COMPLEX":  12000
+  },
+
+  "gitignore_entries": [
+    ".claude/archive/",
+    ".claude/logs/"
+  ]
+}
