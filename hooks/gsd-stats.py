@@ -3,6 +3,8 @@
 GSD Sonnet-Gateway — Audit & Stats
 Standalone script to review classification logs and diff archive files.
 
+Python version: Requires Python 3.7+ (uses pathlib, typing)
+
 Usage:
   python3 ~/.claude/hooks/gsd-stats.py               # stats all logs
   python3 ~/.claude/hooks/gsd-stats.py today         # today only
@@ -20,11 +22,13 @@ import subprocess
 from datetime import datetime, date
 from pathlib import Path
 from collections import Counter, defaultdict
+from typing import List, Dict, Optional
 
 LOG_DIR = Path.home() / ".claude" / "logs" / "gsd-complexity-classifier"
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
-def load_logs(filter_today: bool = False) -> list[dict]:
+def load_logs(filter_today: bool = False) -> List[Dict]:
+    """Load classification logs from disk."""
     if not LOG_DIR.exists():
         return []
     entries = []
@@ -39,8 +43,10 @@ def load_logs(filter_today: bool = False) -> list[dict]:
                     line = line.strip()
                     if line:
                         entries.append(json.loads(line))
-        except Exception:
-            pass
+        except (json.JSONDecodeError, OSError) as e:
+            # Log parse error but continue processing other files
+            if os.environ.get("GSD_DEBUG"):
+                print(f"Warning: Could not parse {log_file}: {e}", file=sys.stderr)
     return entries
 
 def format_cost(tokens: int) -> str:
@@ -100,7 +106,7 @@ def cmd_stats(filter_today: bool = False):
     print(f"{'='*60}\n")
 
 # ── Diff command ───────────────────────────────────────────────────────────────
-def cmd_diff(project_dir: Path | None = None):
+def cmd_diff(project_dir: Optional[Path] = None):
     """Diff 2 newest versions of any watched file in archive."""
     if project_dir is None:
         project_dir = Path.cwd()
@@ -111,7 +117,7 @@ def cmd_diff(project_dir: Path | None = None):
         return
 
     # Group files by base stem (e.g. "PLAN")
-    groups: dict[str, list[Path]] = defaultdict(list)
+    groups: Dict[str, List[Path]] = defaultdict(list)
     for f in sorted(archive_dir.glob("*.md")):
         # Filename format: stem-YYYYMMDD-HHMMSS-phase.md
         # Get base stem by removing timestamp suffix
@@ -136,7 +142,7 @@ def cmd_diff(project_dir: Path | None = None):
         try:
             result = subprocess.run(
                 ["diff", "--color=always", "-u", str(oldest), str(newest)],
-                capture_output=True, text=True
+                capture_output=True, text=True, timeout=30
             )
             if result.stdout:
                 # Limit output to avoid flooding terminal
@@ -150,9 +156,14 @@ def cmd_diff(project_dir: Path | None = None):
                 print("  (no differences)")
         except FileNotFoundError:
             print("  diff command not found — install diffutils")
+        except subprocess.TimeoutExpired:
+            print("  diff command timed out (files too large)")
+        except OSError as e:
+            print(f"  Error running diff: {e}")
 
 # ── List command ───────────────────────────────────────────────────────────────
-def cmd_list(project_dir: Path | None = None):
+def cmd_list(project_dir: Optional[Path] = None):
+    """List all archived files in a project."""
     if project_dir is None:
         project_dir = Path.cwd()
 
@@ -168,10 +179,13 @@ def cmd_list(project_dir: Path | None = None):
 
     print(f"\nArchive: {archive_dir}  ({len(files)} files)\n")
     for f in files:
-        size = f.stat().st_size
-        mtime = datetime.fromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
-        phase = "pre " if f.stem.endswith("-pre") else "post"
-        print(f"  [{phase}] {f.name:<55} {size:>6} B   {mtime}")
+        try:
+            size = f.stat().st_size
+            mtime = datetime.fromtimestamp(f.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+            phase = "pre " if f.stem.endswith("-pre") else "post"
+            print(f"  [{phase}] {f.name:<55} {size:>6} B   {mtime}")
+        except OSError as e:
+            print(f"  [????] {f.name:<55} (error: {e})")
     print()
 
 # ── Entry point ────────────────────────────────────────────────────────────────
