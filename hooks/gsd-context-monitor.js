@@ -77,7 +77,10 @@ process.stdin.on('end', () => {
         warnData = JSON.parse(fs.readFileSync(warnPath, 'utf8'));
         firstWarn = false;
       } catch (e) {
-        // Corrupted file, reset
+        // Corrupted file, reset and log if debug enabled
+        if (process.env.GSD_DEBUG) {
+          process.stderr.write(`[gsd-context-monitor] Warning: Could not read warn file, resetting: ${e.message}\n`);
+        }
       }
     }
 
