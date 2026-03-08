@@ -72,6 +72,7 @@ process.stdin.on('end', () => {
     let warnData = { callsSinceWarn: 0, lastLevel: null };
     let firstWarn = true;
 
+    // Read existing warn data if available
     if (fs.existsSync(warnPath)) {
       try {
         warnData = JSON.parse(fs.readFileSync(warnPath, 'utf8'));
@@ -84,6 +85,7 @@ process.stdin.on('end', () => {
       }
     }
 
+    // Increment counter
     warnData.callsSinceWarn = (warnData.callsSinceWarn || 0) + 1;
 
     const isCritical = remaining <= CRITICAL_THRESHOLD;
@@ -94,14 +96,28 @@ process.stdin.on('end', () => {
     const severityEscalated = currentLevel === 'critical' && warnData.lastLevel === 'warning';
     if (!firstWarn && warnData.callsSinceWarn < DEBOUNCE_CALLS && !severityEscalated) {
       // Update counter and exit without warning
-      fs.writeFileSync(warnPath, JSON.stringify(warnData));
+      // Note: Race condition possible if multiple hooks run simultaneously
+      // but this is acceptable - worst case is duplicate warnings
+      try {
+        fs.writeFileSync(warnPath, JSON.stringify(warnData));
+      } catch (e) {
+        if (process.env.GSD_DEBUG) {
+          process.stderr.write(`[gsd-context-monitor] Warning: Could not write warn file: ${e.message}\n`);
+        }
+      }
       process.exit(0);
     }
 
     // Reset debounce counter
     warnData.callsSinceWarn = 0;
     warnData.lastLevel = currentLevel;
-    fs.writeFileSync(warnPath, JSON.stringify(warnData));
+    try {
+      fs.writeFileSync(warnPath, JSON.stringify(warnData));
+    } catch (e) {
+      if (process.env.GSD_DEBUG) {
+        process.stderr.write(`[gsd-context-monitor] Warning: Could not write warn file: ${e.message}\n`);
+      }
+    }
 
     // Detect if GSD is active (has .planning/STATE.md in working directory)
     const cwd = data.cwd || process.cwd();

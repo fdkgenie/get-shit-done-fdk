@@ -3,6 +3,8 @@
 GSD Sonnet-Gateway — Generated File Archiver
 Dual hook: PreToolUse (archive BEFORE overwrite) + PostToolUse (archive AFTER write).
 
+Python version: Requires Python 3.7+ (uses pathlib, typing)
+
 Timeline for a Write event:
   PreToolUse  → copy OLD file (before Claude overwrites) → archive/name-TIMESTAMP-pre.md
   [Claude writes file]
@@ -54,6 +56,7 @@ import shutil
 import fnmatch
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 # ── Paths & defaults ───────────────────────────────────────────────────────────
 CONFIG_PATH = Path.home() / ".claude" / "hooks" / "gsd-complexity-config.json"
@@ -121,7 +124,7 @@ def should_watch(file_path: Path, project_dir: Path, patterns: list) -> bool:
     return False
 
 # ── Archiver ───────────────────────────────────────────────────────────────────
-def archive_file(src: Path, archive_dir: Path, phase: str) -> str | None:
+def archive_file(src: Path, archive_dir: Path, phase: str) -> Optional[str]:
     """
     Copy src into archive_dir with timestamp + phase label suffix.
     phase: "pre" | "post"

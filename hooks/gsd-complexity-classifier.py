@@ -3,6 +3,8 @@
 GSD Sonnet-Gateway — Complexity Classifier
 UserPromptSubmit hook for GSD (Get Shit Done).
 
+Python version: Requires Python 3.7+ (uses pathlib, typing, f-strings)
+
 Integration with GSD's existing workflow:
   - Classifies prompts as TRIVIAL/STANDARD/COMPLEX
   - Recommends appropriate GSD profiles (sonnet-direct, opusplan, opus-full)
