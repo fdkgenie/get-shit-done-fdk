@@ -39,7 +39,7 @@ npx get-shit-done-cc@latest
 
 **Trusted by engineers at Amazon, Google, Shopify, and Webflow.**
 
-[Why I Built This](#why-i-built-this) · [How It Works](#how-it-works) · [Commands](#commands) · [Why It Works](#why-it-works) · [User Guide](docs/USER-GUIDE.md)
+[Why I Built This](#why-i-built-this) · [How It Works](#how-it-works) · [Sonnet-Gate](#sonnet-gate) · [Commands](#commands) · [Why It Works](#why-it-works) · [User Guide](docs/USER-GUIDE.md)
 
 </div>
 
@@ -432,6 +432,53 @@ Every stage uses the same pattern: a thin orchestrator spawns specialized agents
 The orchestrator never does heavy lifting. It spawns agents, waits, integrates results.
 
 **The result:** You can run an entire phase — deep research, multiple plans created and verified, thousands of lines of code written across parallel executors, automated verification against goals — and your main context window stays at 30-40%. The work happens in fresh subagent contexts. Your session stays fast and responsive.
+
+---
+
+## Sonnet-Gate
+
+**Automatic complexity classification and cost optimization for GSD.**
+
+Sonnet-Gate analyzes your prompts in real-time and automatically recommends the optimal model routing based on task complexity:
+
+| Classification | Use Case | Model Strategy | Cost Range |
+|----------------|----------|----------------|------------|
+| 🟢 **TRIVIAL** | Simple tasks (typo fixes, git commands, formatting) | Sonnet direct | ~$0.00-0.01 |
+| 🟡 **STANDARD** | Medium tasks (implement function, fix bug, refactor module) | OpusPlan mode | ~$0.02-0.05 |
+| 🔴 **COMPLEX** | Hard tasks (system redesign, multi-file changes, architecture) | Full GSD workflow | ~$0.30-0.80 |
+
+**Expected savings:** ~42% cost reduction on typical usage patterns.
+
+### How It Works
+
+1. **UserPromptSubmit Hook** — Analyzes your prompt before Claude processes it
+2. **Pattern Matching + Heuristics** — Evaluates word count and complexity patterns
+3. **Automatic Recommendation** — Suggests the optimal GSD profile for the task
+4. **Cost Tracking** — Logs all classifications with cost estimates for analysis
+
+### Features
+
+- **Automatic Archive System** — Backs up `.planning/` files with pre/post snapshots
+- **Enhanced Statusline** — Visual complexity indicators (🟢🟡🔴) in real-time
+- **Stats & Audit Utility** — Track costs, analyze patterns, diff archive files
+- **Configurable Patterns** — Customize classification via `gsd-complexity-config.json`
+- **Session-Aware** — Tracks complexity per session for accurate display
+
+### Getting Started
+
+See the [Sonnet-Gate Quick Start Guide](docs/SONNET-GATEWAY-QUICKSTART.md) for 5-minute setup, or the [Full Integration Guide](docs/SONNET-GATEWAY-INTEGRATION.md) for comprehensive documentation.
+
+**Quick install:**
+```bash
+# Copy hooks to Claude config
+cp hooks/gsd-*.{py,js} ~/.claude/hooks/
+cp hooks/gsd-complexity-config.json ~/.claude/hooks/
+chmod +x ~/.claude/hooks/gsd-*.{py,js}
+```
+
+See the setup guides for complete installation instructions including settings.json configuration.
+
+---
 
 ### Atomic Git Commits
 

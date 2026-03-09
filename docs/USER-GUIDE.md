@@ -10,6 +10,7 @@ A detailed reference for workflows, troubleshooting, and configuration. For quic
 - [Command Reference](#command-reference)
 - [Configuration Reference](#configuration-reference)
 - [Usage Examples](#usage-examples)
+- [Sonnet-Gate Integration](#sonnet-gate-integration)
 - [Troubleshooting](#troubleshooting)
 - [Recovery Quick Reference](#recovery-quick-reference)
 
@@ -410,6 +411,63 @@ claude --dangerously-skip-permissions
 # or
 /gsd:remove-phase 7         # Descope phase 7 and renumber
 ```
+
+---
+
+## Sonnet-Gate Integration
+
+**Automatic complexity classification and cost optimization for GSD.**
+
+Sonnet-Gate is an optional enhancement that automatically analyzes your prompts and recommends the optimal model routing based on task complexity. It integrates seamlessly with GSD workflows.
+
+### Overview
+
+| Classification | Use Case | Recommended Workflow | Cost Range |
+|----------------|----------|----------------------|------------|
+| 🟢 **TRIVIAL** | Simple tasks | Direct execution with Sonnet | ~$0.00-0.01 |
+| 🟡 **STANDARD** | Medium tasks | `/gsd:quick` or OpusPlan mode | ~$0.02-0.05 |
+| 🔴 **COMPLEX** | Hard tasks | Full GSD workflow (`/gsd:plan-phase`) | ~$0.30-0.80 |
+
+**Benefits:**
+- ~42% cost reduction on typical usage patterns
+- Better quality on complex tasks through appropriate workflow selection
+- Visual complexity indicators in statusline (🟢🟡🔴)
+- Complete audit trail of all classifications and costs
+
+### Key Features
+
+1. **Automatic Classification** — UserPromptSubmit hook analyzes prompts before Claude processes them
+2. **Archive System** — Pre/post snapshots of `.planning/` files for rollback capability
+3. **Cost Tracking** — Stats utility for analyzing spending patterns across projects
+4. **Configurable Patterns** — Customize classification rules via `gsd-complexity-config.json`
+
+### Quick Commands
+
+```bash
+# View classification stats
+gsd-stats                  # All-time statistics
+gsd-stats-today            # Today's classifications
+
+# Archive management
+gsd-stats diff             # Diff archive files
+gsd-stats list             # List archived files
+```
+
+### Setup
+
+See the comprehensive setup guides:
+- [Sonnet-Gate Quick Start](SONNET-GATEWAY-QUICKSTART.md) — 5-minute installation
+- [Full Integration Guide](SONNET-GATEWAY-INTEGRATION.md) — Complete documentation
+
+### Integration with GSD Commands
+
+Sonnet-Gate enhances but doesn't replace GSD commands. Follow its recommendations:
+
+- **🟢 TRIVIAL** → Execute directly with Sonnet (no GSD command needed)
+- **🟡 STANDARD** → Use `/gsd:quick` or `/gsd:quick --discuss`
+- **🔴 COMPLEX** → Use full workflow: `/gsd:discuss-phase`, `/gsd:plan-phase`, `/gsd:execute-phase`
+
+All GSD features (wave execution, atomic commits, verification) work identically with Sonnet-Gate installed.
 
 ---
 
