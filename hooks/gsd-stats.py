@@ -24,7 +24,9 @@ from pathlib import Path
 from collections import Counter, defaultdict
 from typing import List, Dict, Optional
 
-LOG_DIR = Path.home() / ".claude" / "logs" / "gsd-complexity-classifier"
+# Respect CLAUDE_CONFIG_DIR environment variable for custom config directory setups
+CLAUDE_CONFIG_DIR = Path(os.environ.get("CLAUDE_CONFIG_DIR", Path.home() / ".claude"))
+LOG_DIR = CLAUDE_CONFIG_DIR / "logs" / "gsd-complexity-classifier"
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 def load_logs(filter_today: bool = False) -> List[Dict]:

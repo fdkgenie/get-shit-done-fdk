@@ -59,7 +59,9 @@ from pathlib import Path
 from typing import Optional
 
 # ── Paths & defaults ───────────────────────────────────────────────────────────
-CONFIG_PATH = Path.home() / ".claude" / "hooks" / "gsd-complexity-config.json"
+# Respect CLAUDE_CONFIG_DIR environment variable for custom config directory setups
+CLAUDE_CONFIG_DIR = Path(os.environ.get("CLAUDE_CONFIG_DIR", Path.home() / ".claude"))
+CONFIG_PATH = CLAUDE_CONFIG_DIR / "hooks" / "gsd-complexity-config.json"
 
 DEFAULT_WATCHED = [
     ".planning/**/PLAN.md",

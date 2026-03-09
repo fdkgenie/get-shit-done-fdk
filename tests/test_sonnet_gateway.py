@@ -71,19 +71,21 @@ class TestComplexityClassifier(unittest.TestCase):
         self.config = {
             "word_thresholds": {"trivial_max": 10, "complex_min": 60, "complex_boost": 100},
             "trivial_patterns": [
-                r"\b(fix typo|rename|format)\b",
-                r"\b(git (status|log|diff))\b",
+                r"\b(fix typo|rename|format|lint)\b",
+                r"\b(add comment|update comment)\b",
+                r"\b(git (status|log|diff|add|commit|push|stash|pull|fetch))\b",
             ],
             "standard_patterns": [
-                r"\b(implement|add|create).{0,30}(function|method|class|validation)\b",
-                r"\b(fix|debug).{0,30}(bug|error)\b",
+                r"\b(implement|add|create|write).{0,30}(function|method|class|component|test|util|validation)\b",
+                r"\b(fix|debug|resolve).{0,30}(bug|error|issue|warning)\b",
             ],
             "complex_patterns": [
-                r"\b(architect|design|redesign)\b",
-                r"\b(migrate|migration).{0,30}(database|framework|rest|api|graphql)\b",
-                r"\b(refactor).{0,20}(entire|whole|all|codebase)\b",
-                r"\b(entire|whole).{0,30}(rest|api|system|codebase)\b",
-                r"\b(microservices|platform|restructure)\b",
+                r"\b(architect|design|redesign|overhaul|restructure)\b",
+                r"\b(migrate|migration|upgrade).{0,30}(database|framework|version|stack|api|rest|graphql|microservice)\b",
+                r"\b(refactor).{0,20}(entire|whole|all|codebase|module)\b",
+                r"\b(entire|whole).{0,30}(rest|api|system|codebase|service)\b",
+                r"\b(rest\s+api|graphql|microservice|microservices|authentication system)\b",
+                r"\b(migrate.{0,30}to|migration.{0,30}to)\b",
             ],
             "cost_estimate_tokens": {"TRIVIAL": 0, "STANDARD": 4000, "COMPLEX": 12000},
         }
@@ -245,9 +247,9 @@ class TestIntegration(unittest.TestCase):
             "trivial_patterns": [r"\b(fix typo)\b"],
             "standard_patterns": [r"\b(implement)\b"],
             "complex_patterns": [
-                r"\b(migrate)\b",
-                r"\b(entire)\b",
-                r"\b(system)\b"
+                r"\b(migrate|migration)\b",
+                r"\b(entire|whole)\b",
+                r"\b(system|api|codebase)\b"
             ],
             "cost_estimate_tokens": {"TRIVIAL": 0, "STANDARD": 4000, "COMPLEX": 12000},
         }
