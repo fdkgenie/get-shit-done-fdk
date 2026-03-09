@@ -3,6 +3,8 @@
 GSD Sonnet-Gateway — Generated File Archiver
 Dual hook: PreToolUse (archive BEFORE overwrite) + PostToolUse (archive AFTER write).
 
+Python version: Requires Python 3.7+ (uses pathlib, typing)
+
 Timeline for a Write event:
   PreToolUse  → copy OLD file (before Claude overwrites) → archive/name-TIMESTAMP-pre.md
   [Claude writes file]
@@ -54,6 +56,7 @@ import shutil
 import fnmatch
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 # ── Paths & defaults ───────────────────────────────────────────────────────────
 CONFIG_PATH = Path.home() / ".claude" / "hooks" / "gsd-complexity-config.json"
@@ -75,6 +78,7 @@ DEFAULT_GITIGNORE_ENTRIES = [
 
 # ── Config loader ──────────────────────────────────────────────────────────────
 def load_watched_patterns() -> list:
+    """Load watched file patterns from config file."""
     if CONFIG_PATH.exists():
         try:
             with open(CONFIG_PATH, encoding="utf-8") as f:
@@ -82,11 +86,13 @@ def load_watched_patterns() -> list:
             patterns = cfg.get("watched_files")
             if isinstance(patterns, list) and patterns:
                 return patterns
-        except Exception:
-            pass
+        except (json.JSONDecodeError, OSError, KeyError) as e:
+            # Log config load errors but don't fail - use defaults
+            print(f"[gsd-archive] Warning: Could not load config from {CONFIG_PATH}: {e}", file=sys.stderr)
     return DEFAULT_WATCHED
 
 def load_gitignore_entries() -> list:
+    """Load gitignore entries from config file."""
     if CONFIG_PATH.exists():
         try:
             with open(CONFIG_PATH, encoding="utf-8") as f:
@@ -94,8 +100,9 @@ def load_gitignore_entries() -> list:
             entries = cfg.get("gitignore_entries")
             if isinstance(entries, list):
                 return entries
-        except Exception:
-            pass
+        except (json.JSONDecodeError, OSError, KeyError) as e:
+            # Log config load errors but don't fail - use defaults
+            print(f"[gsd-archive] Warning: Could not load gitignore entries from {CONFIG_PATH}: {e}", file=sys.stderr)
     return DEFAULT_GITIGNORE_ENTRIES
 
 # ── Project dir ────────────────────────────────────────────────────────────────
@@ -111,13 +118,13 @@ def should_watch(file_path: Path, project_dir: Path, patterns: list) -> bool:
         for pattern in patterns:
             if fnmatch.fnmatch(rel_str, pattern):
                 return True
-    except ValueError:
-        # file_path is not relative to project_dir
-        pass
+    except (ValueError, OSError) as e:
+        # file_path is not relative to project_dir or path access error
+        print(f"[gsd-archive] Warning: Could not check pattern for {file_path}: {e}", file=sys.stderr)
     return False
 
 # ── Archiver ───────────────────────────────────────────────────────────────────
-def archive_file(src: Path, archive_dir: Path, phase: str) -> str | None:
+def archive_file(src: Path, archive_dir: Path, phase: str) -> Optional[str]:
     """
     Copy src into archive_dir with timestamp + phase label suffix.
     phase: "pre" | "post"
@@ -126,13 +133,17 @@ def archive_file(src: Path, archive_dir: Path, phase: str) -> str | None:
     if not src.exists():
         return None
 
-    ts           = datetime.now().strftime("%Y%m%d-%H%M%S")
-    archive_name = f"{src.stem}-{ts}-{phase}{src.suffix}"
-    archive_path = archive_dir / archive_name
+    try:
+        ts           = datetime.now().strftime("%Y%m%d-%H%M%S")
+        archive_name = f"{src.stem}-{ts}-{phase}{src.suffix}"
+        archive_path = archive_dir / archive_name
 
-    archive_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(src, archive_path)
-    return str(archive_path)
+        archive_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, archive_path)
+        return str(archive_path)
+    except (OSError, shutil.Error) as e:
+        print(f"[gsd-archive] Error: Could not archive {src}: {e}", file=sys.stderr)
+        return None
 
 # ── .gitignore updater ─────────────────────────────────────────────────────────
 def ensure_gitignore(project_dir: Path):
@@ -156,8 +167,9 @@ def ensure_gitignore(project_dir: Path):
             f.write(block)
 
         print(f"[gsd-archive] .gitignore updated: added {missing}", file=sys.stderr)
-    except Exception:
-        pass  # gitignore update failure doesn't block main flow
+    except (OSError, UnicodeDecodeError) as e:
+        # gitignore update failure doesn't block main flow
+        print(f"[gsd-archive] Warning: Could not update .gitignore: {e}", file=sys.stderr)
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 def main():
@@ -184,8 +196,22 @@ def main():
         if not file_path:
             sys.exit(0)
 
-        written_path = Path(file_path)
+        # Validate file path to prevent path traversal attacks
+        try:
+            written_path = Path(file_path).resolve()
+        except (ValueError, OSError) as e:
+            print(f"[gsd-archive] Error: Invalid file path: {e}", file=sys.stderr)
+            sys.exit(1)
+
         project_dir = get_project_dir()
+
+        # Ensure file path is within project directory (prevent path traversal)
+        try:
+            written_path.relative_to(project_dir)
+        except ValueError:
+            # File is outside project directory - potentially malicious
+            print(f"[gsd-archive] Warning: File path outside project directory, skipping: {written_path}", file=sys.stderr)
+            sys.exit(0)
 
         # Only archive if file matches watch patterns
         patterns = load_watched_patterns()

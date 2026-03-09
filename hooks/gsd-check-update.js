@@ -57,12 +57,22 @@ const child = spawn(process.execPath, ['-e', `
     } else if (fs.existsSync(globalVersionFile)) {
       installed = fs.readFileSync(globalVersionFile, 'utf8').trim();
     }
-  } catch (e) {}
+  } catch (e) {
+    // File read error - log to stderr but continue
+    if (process.env.GSD_DEBUG) {
+      console.error('[gsd-check-update] Warning: Could not read VERSION file:', e.message);
+    }
+  }
 
   let latest = null;
   try {
     latest = execSync('npm view get-shit-done-cc version', { encoding: 'utf8', timeout: 10000, windowsHide: true }).trim();
-  } catch (e) {}
+  } catch (e) {
+    // Network or npm error - log to stderr but continue
+    if (process.env.GSD_DEBUG) {
+      console.error('[gsd-check-update] Warning: Could not check npm for latest version:', e.message);
+    }
+  }
 
   const result = {
     update_available: latest && installed !== latest,

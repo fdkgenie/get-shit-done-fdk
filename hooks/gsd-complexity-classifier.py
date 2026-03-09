@@ -3,6 +3,8 @@
 GSD Sonnet-Gateway — Complexity Classifier
 UserPromptSubmit hook for GSD (Get Shit Done).
 
+Python version: Requires Python 3.7+ (uses pathlib, typing, f-strings)
+
 Integration with GSD's existing workflow:
   - Classifies prompts as TRIVIAL/STANDARD/COMPLEX
   - Recommends appropriate GSD profiles (sonnet-direct, opusplan, opus-full)
@@ -103,8 +105,9 @@ def load_config() -> dict:
                 **cfg.get("cost_estimate_tokens", {}),
             }
             return merged
-        except Exception:
-            pass  # parse error → fallback
+        except (json.JSONDecodeError, OSError, KeyError) as e:
+            # Log parse error but continue with defaults
+            print(f"[gsd-classifier] Warning: Could not load config from {CONFIG_PATH}: {e}", file=sys.stderr)
     return DEFAULT_CONFIG
 
 # ── Classifier ─────────────────────────────────────────────────────────────────
@@ -213,6 +216,7 @@ def build_context(result: dict) -> str:
 
 # ── Logger ─────────────────────────────────────────────────────────────────────
 def log_entry(prompt: str, result: dict, session_id: str):
+    """Log classification entry to daily log file."""
     try:
         LOG_DIR.mkdir(parents=True, exist_ok=True)
         today    = datetime.now().strftime("%Y-%m-%d")
@@ -228,8 +232,9 @@ def log_entry(prompt: str, result: dict, session_id: str):
         }
         with open(log_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-    except Exception:
-        pass  # log failure never blocks main flow
+    except (OSError, TypeError, ValueError) as e:
+        # log failure never blocks main flow
+        print(f"[gsd-classifier] Warning: Could not write log entry: {e}", file=sys.stderr)
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 def main():
