@@ -40,9 +40,11 @@ from datetime import datetime
 from pathlib import Path
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
-HOOKS_DIR   = Path.home() / ".claude" / "hooks"
+# Respect CLAUDE_CONFIG_DIR environment variable for custom config directory setups
+CLAUDE_CONFIG_DIR = Path(os.environ.get("CLAUDE_CONFIG_DIR", Path.home() / ".claude"))
+HOOKS_DIR   = CLAUDE_CONFIG_DIR / "hooks"
 CONFIG_PATH = HOOKS_DIR / "gsd-complexity-config.json"
-LOG_DIR     = Path.home() / ".claude" / "logs" / "gsd-complexity-classifier"
+LOG_DIR     = CLAUDE_CONFIG_DIR / "logs" / "gsd-complexity-classifier"
 
 # ── Fallback defaults (used when config.json doesn't exist) ───────────────────
 DEFAULT_CONFIG = {
@@ -67,7 +69,10 @@ DEFAULT_CONFIG = {
         r"\b(architect|design|redesign|overhaul|restructure)\b",
         r"\b(implement|build|create).{0,30}(system|service|pipeline|api|platform|framework)\b",
         r"\b(refactor).{0,20}(entire|whole|all|codebase|module)\b",
-        r"\b(migrate|migration|upgrade).{0,30}(database|framework|version|stack)\b",
+        r"\b(migrate|migration|upgrade).{0,30}(database|framework|version|stack|api|rest|graphql|microservice)\b",
+        r"\b(entire|whole).{0,30}(rest|api|system|codebase|service)\b",
+        r"\b(rest\s+api|graphql|microservice|microservices)\b",
+        r"\b(migrate.{0,30}to|migration.{0,30}to)\b",
         r"\b(multi.?file|codebase.?wide|across.{0,10}files?|multiple.{0,10}files?)\b",
         r"\b(performance|optimize|scale|security|authentication|authorization)\b",
         r"\b(investigate|diagnose|trace|profile)\b",
